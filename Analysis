@@ -1,133 +1,120 @@
-  –most decorated summer athlete and percentage of country medals
+--SQL was used for organizing and exploring data and Tableau was used for Visualization
+--Two csv files were used: 2020_Olympics_Dataset and TOkyo_Olympic_Medals_Official
+
+
+--Medal count by country and percent of medals
 SELECT
-  country,
-  name,
-  COUNT(medal) AS golds,
-  ROUND((COUNT(medal)/SUM(COUNT(medal)) OVER(PARTITION BY country))*(100),2) AS Percent_of_country_golds
+RANK()OVER(ORDER BY Total DESC) AS Rank,
+Country,
+Gold,
+ROUND (SUM(Gold)/SUM(SUM(Gold)) OVER()*(100),2) AS Perc_of_Gold,
+Silver,
+ROUND(SUM(Silver)/SUM(SUM(SILVER)) OVER()*(100),2) AS Perc_of_Silver,
+Bronze,
+ROUND(SUM(Bronze)/SUM(SUM(Bronze)) OVER()*(100),2) AS Perc_of_Bronze,
+Total,
+ROUND(Total/SUM(Total) OVER()*(100),2) AS Perc_of_Medals
 FROM
-  DC_Project.summer_games AS s
-JOIN
-  DC_Project.athletes AS a
-ON
-  (s.athlete_id = a.id)
-JOIN
-  DC_Project.countries AS c
-ON
-  (s.country_id = c.id)
-WHERE
-  medal = 'Gold'
+Tokyo_Games_v2.medals_official
 GROUP BY
-  country,
-  name
+Country,
+total,
+Gold,
+Silver,
+Bronze
 ORDER BY
-  golds DESC,
-  country
+Total DESC
 
 
- –most decorated winter athlete and percentage of country medals
+--Percent of athletes in shared disciplines
+    -GRY and SWA record null values for multiple columns as they are women only events
 
-SELECT
-  country,
-  name,
-  COUNT(medal) AS golds,
-  ROUND((COUNT(medal)/SUM(COUNT(medal)) OVER(PARTITION BY country))*(100),2) AS Percent_of_country_golds
-FROM
-  DC_Project.winter_games AS w
-JOIN
-  DC_Project.athletes AS a
-ON
-  (w.athlete_id = a.id)
-JOIN
-  DC_Project.countries AS c
-ON
-  (w.country_id = c.id)
-WHERE
-  medal = 'Gold'
-GROUP BY
-  country,
-  name
-ORDER BY
-  golds DESC,
-  country
-
-
-
-–medal count by country, percent of total medals, and medals per million of summer onlympic games 
-
-SELECT
-  country,
-  COUNT(medal) AS Medal_Count,
-  ROUND(COUNT(medal)/SUM(COUNT(medal)) OVER(),2) AS Percent_of_Total,
-  population,
-  COUNT(medal)/population AS Medals_Per_Million
-FROM (
+WITH
+  Men AS (
   SELECT
-    medal,
-    sg.country_id,
-    year
+    Discipline,
+    COUNT(DISTINCT CODE) AS Male_Athletes
   FROM
-    DC_Project.summer_games AS sg
-  UNION ALL
-  SELECT
-    medal,
-    wg.country_id,
-    year
-  FROM
-    DC_Project.winter_games AS wg ) AS og
-JOIN
-  DC_Project.country_stats AS cs
-ON
-  (og.country_id = cs.country_id)
-  AND (cs.year = og.year)
-JOIN
-  DC_Project.countries AS c
-ON
-  (c.id = cs.country_id)
-WHERE
-  cs.year = '2016-01-01'
-  --Substituting '2014-01-01' for the year will populate results for winter olympic games
-GROUP BY
-  country,
-  population
-ORDER BY
-  Medal_Count DESC
-
-
-
--- Percentage of world population, percentage of world gdp, average height, and height deviation grouped by region
-SELECT
-  region,
-  SUM(population)/SUM(SUM(population)) OVER() AS perc_world_pop,
-  SUM(gdp)/SUM(SUM(GDP)) OVER() AS perc_world_gdp,
-  AVG(height) AS avg_height,
-  ((AVG(height)/AVG(AVG(height)) OVER())-1)*100 AS Height_Deviation,
-FROM
-  DC_Project.countries AS c
-JOIN (
-  SELECT
-    country_id,
-    height,
-    gender
-  FROM
-    DC_Project.summer_games AS s
-  JOIN
-    DC_Project.athletes AS a
-  ON
-    s.athlete_id = a.id
+    Tokyo_Games_v2.Olympic_Data
+  WHERE
+    Gender = 'Male'
   GROUP BY
-    country_id,
-    height,
-    gender
-  ORDER BY
-    country_id,
-    height DESC) AS subquery
+    Discipline),
+
+  Women AS (
+  SELECT
+    Discipline,
+    COUNT(DISTINCT CODE) AS Female_Athletes
+  FROM
+    Tokyo_Games_v2.Olympic_Data
+  WHERE
+    Gender = 'Female'
+  GROUP BY
+    Discipline)
+
+SELECT
+  OD.discipline,
+  COUNT(DISTINCT CODE) AS Total_Athletes,
+  Male_Athletes,
+  ROUND((SUM(Male_Athletes)/(SUM(Male_Athletes) + SUM(Female_Athletes))),2) AS Perc_Male,
+  Female_Athletes,
+  ROUND((SUM(Female_Athletes)/(SUM(Male_Athletes) + SUM(Female_Athletes))),2) AS Perc_Female
+FROM
+  Tokyo_Games_v2.Olympic_Data AS OD
+FULL JOIN
+  Men
 ON
-  c.id = subquery.country_id
-JOIN
-  DC_Project.country_stats AS cs
+  (Men.Discipline=OD.Discipline)
+FULL JOIN
+  Women
 ON
-  subquery.country_id = cs.country_id
+  (Women.Discipline=OD.Discipline)
+
 GROUP BY
-  region
+  discipline,
+  Male_Athletes,
+  Female_Athletes
+
+
+--Count and percent of athletes by country
+SELECT
+  COALESCE(noc,"All Countries") AS Country,
+  COUNT(Name) AS Count_of_Athletes,
+  (ROUND((COUNT(name)/SUM(COUNT(name))OVER())*(100),2))*2 AS Percent_of_Athletes
+FROM
+  Tokyo_Olympics.Athletes
+GROUP BY
+  ROLLUP(noc)
 ORDER BY
-  Perc_world_pop DESC;
+  Count_of_Athletes desc
+
+
+
+--Count and percent of athletes by country
+SELECT
+ COALESCE(Noc,"All Countries") Country,
+ COUNT(DISTINCT CODE) AS Count_of_Athletes,
+ (ROUND((COUNT(DISTINCT CODE)/SUM(COUNT(DISTINCT CODE))OVER())*(100),2))*2 AS Percent_of_Athletes
+FROM
+ Tokyo_Games_v2.Olympic_Data
+GROUP BY
+ ROLLUP(noc)
+ORDER BY
+ Count_of_Athletes desc
+
+
+--Average athlete age by country
+SELECT
+ Country,
+ ROUND(AVG(AGE),2) Avg_Age
+FROM (
+ SELECT
+   DISTINCT CODE,
+   Country,
+   Age
+ FROM
+   Tokyo_Games_v2.Olympic_Data ) AS bracket
+GROUP BY
+ Country
+ORDER BY
+ Avg_Age desc
