@@ -92,7 +92,7 @@ ORDER BY
 
 --Count and percent of athletes by country
 SELECT
- COALESCE(Noc,"All Countries") Country,
+ COALESCE(Noc,"All Countries") AS Country,
  COUNT(DISTINCT CODE) AS Count_of_Athletes,
  (ROUND((COUNT(DISTINCT CODE)/SUM(COUNT(DISTINCT CODE))OVER())*(100),2))*2 AS Percent_of_Athletes
 FROM
