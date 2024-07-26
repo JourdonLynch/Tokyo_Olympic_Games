@@ -113,7 +113,7 @@ FROM (
    Country,
    Age
  FROM
-   Tokyo_Games_v2.Olympic_Data ) AS bracket
+   Tokyo_Games_v2.Olympic_Data ) AS Ages
 GROUP BY
  Country
 ORDER BY
