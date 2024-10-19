@@ -4,7 +4,7 @@
 
 --Medal count by country and percent of medals
 SELECT
-RANK()OVER(ORDER BY Total DESC) AS Rank,
+RANK() OVER(ORDER BY Total DESC) AS Rank,
 Country,
 Gold,
 ROUND (SUM(Gold)/SUM(SUM(Gold)) OVER()*(100),2) AS Perc_of_Gold,
@@ -78,7 +78,7 @@ GROUP BY
 
 --Count and percent of athletes by country
 SELECT
-  COALESCE(noc,"All Countries") AS Country,
+  COALESCE(noc,'All Countries') AS Country,
   COUNT(Name) AS Count_of_Athletes,
   (ROUND((COUNT(name)/SUM(COUNT(name))OVER())*(100),2))*2 AS Percent_of_Athletes
 FROM
@@ -92,7 +92,7 @@ ORDER BY
 
 --Count and percent of athletes by country
 SELECT
- COALESCE(Noc,"All Countries") AS Country,
+ COALESCE(Noc,'All Countries') AS Country,
  COUNT(DISTINCT CODE) AS Count_of_Athletes,
  (ROUND((COUNT(DISTINCT CODE)/SUM(COUNT(DISTINCT CODE))OVER())*(100),2))*2 AS Percent_of_Athletes
 FROM
