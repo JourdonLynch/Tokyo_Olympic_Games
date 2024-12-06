@@ -7,7 +7,7 @@ SELECT
 RANK() OVER(ORDER BY Total DESC) AS Rank,
 Country,
 Gold,
-ROUND (SUM(Gold)/SUM(SUM(Gold)) OVER()*(100),2) AS Perc_of_Gold,
+ROUND(SUM(Gold)/SUM(SUM(Gold)) OVER()*(100),2) AS Perc_of_Gold,
 Silver,
 ROUND(SUM(Silver)/SUM(SUM(SILVER)) OVER()*(100),2) AS Perc_of_Silver,
 Bronze,
